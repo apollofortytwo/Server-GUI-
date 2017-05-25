@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 import javax.swing.JFrame;
 
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -36,6 +37,11 @@ public class ClientProgram extends Listener {
 		client.getKryo().register(PacketMessage.class);
 		client.getKryo().register(Character.class);
 		client.getKryo().register(CharacterMove.class);
+		client.getKryo().register(Color.class, new JavaSerializer());
+		
+		client.getKryo().setAutoReset(false);
+		
+		
 
 		// Start the client
 		client.start();
@@ -65,19 +71,20 @@ public class ClientProgram extends Listener {
 	// I'm only going to implement this method from Listener.class because I
 	// only need to use this one.
 	public void received(Connection c, Object p) {
+		client.getKryo().register(Color.class, new JavaSerializer());
+		
 		// Is the received packet the same class as PacketMessage.class?
 		if (p instanceof PacketMessage) {
 			// Cast it, so we can access the message within.
 			PacketMessage packet = (PacketMessage) p;
 			System.out.println(packet.message);
 		}
-		if (p instanceof Character) {
-
-			clientF.paintComponent(clientF.getGraphics());
-		}
 
 		if (p instanceof Character) {
+			
 			Character update = (Character) p;
+			
+			
 			if (inList(update)) {
 				for (Character localChar : clientF.localCharacter) {
 					if (localChar.user == update.user) {
@@ -88,7 +95,6 @@ public class ClientProgram extends Listener {
 			} else {
 				clientF.localCharacter.add(update);
 			}
-
 			clientF.paintComponent(clientF.getGraphics());
 		}
 
@@ -117,12 +123,6 @@ class ClientFrame extends JFrame implements KeyListener {
 		this.paintComponent(getGraphics());
 		this.addKeyListener(this);
 		
-		Random random = new Random();
-		float hue = random.nextFloat();
-		// Saturation between 0.1 and 0.3
-		float saturation = (random.nextInt(2000) + 1000) / 10000f;
-		float luminance = 0.9f;
-		color = Color.getHSBColor(hue, saturation, luminance);
 		
 		
 	}
@@ -131,8 +131,9 @@ class ClientFrame extends JFrame implements KeyListener {
 		super.paintComponents(g);
 		g.setColor(Color.GRAY);
 		g.fillRect(0, 0, getWidth(), getHeight());
-		g.setColor(color);
+		
 		for (Character character : localCharacter) {
+			g.setColor(character.color);
 			g.drawRect(character.x, character.y, character.width, character.height);
 		}
 	}

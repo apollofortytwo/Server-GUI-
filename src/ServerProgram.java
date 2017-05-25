@@ -1,7 +1,12 @@
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Scanner;
 
+import org.objenesis.strategy.StdInstantiatorStrategy;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
@@ -21,9 +26,14 @@ public class ServerProgram extends Listener {
 		server = new Server();
 
 		// Register a packet class.
+		
 		server.getKryo().register(PacketMessage.class);
 		server.getKryo().register(Character.class);
 		server.getKryo().register(CharacterMove.class);
+		server.getKryo().register(Color.class, new JavaSerializer());
+		
+		server.getKryo().setAutoReset(false);
+		
 
 		// We can only send objects as packets if they are registered.
 
@@ -48,14 +58,17 @@ public class ServerProgram extends Listener {
 
 	// This is run when a connection is received!
 	public void connected(Connection c) {
-		System.out.println("Received a connection from " + c.getRemoteAddressTCP().getHostString());
+		System.out.println("Received a connection from "
+				+ c.getRemoteAddressTCP().getHostString());
 		System.out.println("Connection Id:" + c.getID());
 		// Create a message packet.
 		PacketMessage packetMessage = new PacketMessage();
 		// Assign the message text.
-		packetMessage.message = "Hello friend! The time is: " + new Date().toString();
+		packetMessage.message = "Hello friend! The time is: "
+				+ new Date().toString();
 
 		Character character = new Character();
+		character.color = new Color((int) (Math.random() * 0x1000000));
 		character.user = c.getID();
 		character.x = 50;
 		character.y = 50;
@@ -68,7 +81,7 @@ public class ServerProgram extends Listener {
 		for (Character localChar : localCharList) {
 			c.sendTCP(localChar);
 		}
-		
+
 		server.sendToAllTCP(character);
 
 		// Alternatively, we could do:
