@@ -3,6 +3,7 @@ import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.swing.JFrame;
@@ -16,7 +17,7 @@ public class ClientProgram extends Listener {
 	// Our client object.
 	static Client client;
 	// IP to connect to.
-	static String ip = "localhost";
+	static String ip = "10.20.17.126";
 	// Ports to connect on.
 	static int tcpPort = 27962, udpPort = 27962;
 	static String nickname = "null";
@@ -39,8 +40,7 @@ public class ClientProgram extends Listener {
 		// Start the client
 		client.start();
 		// The client MUST be started before connecting can take place.
-		System.out.println("enter a nickname");
-		nickname = sc.nextLine();
+
 		clientF = new ClientFrame(nickname);
 
 		// Connect to the server - wait 5000ms before failing.
@@ -106,23 +106,32 @@ public class ClientProgram extends Listener {
 }
 
 class ClientFrame extends JFrame implements KeyListener {
-
+	Color color;
 	public ArrayList<Character> localCharacter = new ArrayList<Character>();
 
 	ClientFrame(String nickname) {
 		this.setTitle("Drawing Graphics in thisrames");
-		this.setBounds(0, 0, 500, 500);
+		this.setBounds(0, 0, 1000, 1000);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setVisible(true);
 		this.paintComponent(getGraphics());
 		this.addKeyListener(this);
+		
+		Random random = new Random();
+		float hue = random.nextFloat();
+		// Saturation between 0.1 and 0.3
+		float saturation = (random.nextInt(2000) + 1000) / 10000f;
+		float luminance = 0.9f;
+		color = Color.getHSBColor(hue, saturation, luminance);
+		
+		
 	}
 
 	protected void paintComponent(Graphics g) {
 		super.paintComponents(g);
 		g.setColor(Color.GRAY);
 		g.fillRect(0, 0, getWidth(), getHeight());
-		g.setColor(Color.GREEN);
+		g.setColor(color);
 		for (Character character : localCharacter) {
 			g.drawRect(character.x, character.y, character.width, character.height);
 		}
@@ -136,20 +145,21 @@ class ClientFrame extends JFrame implements KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		CharacterMove cm = new CharacterMove();
+		int speed = 5;
 		if (e.getKeyCode() == (KeyEvent.VK_W)) {
 			cm.x += 0;
-			cm.y += -1;
+			cm.y += -speed;
 		}
 		if (e.getKeyCode() == (KeyEvent.VK_A)) {
-			cm.x += -1;
+			cm.x += -speed;
 			cm.y += 0;
 		}
 		if (e.getKeyCode() == (KeyEvent.VK_S)) {
 			cm.x += 0;
-			cm.y += 1;
+			cm.y += speed;
 		}
 		if (e.getKeyCode() == (KeyEvent.VK_D)) {
-			cm.x += 1;
+			cm.x += speed;
 			cm.y += 0;
 		}
 		ClientProgram.client.sendUDP(cm);
